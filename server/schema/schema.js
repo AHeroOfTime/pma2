@@ -13,6 +13,7 @@ const {
   GraphQLList,
   GraphQLNonNull,
   GraphQLEnumType,
+  GraphQLScalarType,
 } = require('graphql');
 
 // Project Type
@@ -43,6 +44,7 @@ const ClientType = new GraphQLObjectType({
   }),
 });
 
+// Root query
 const RootQuery = new GraphQLObjectType({
   name: 'RootQueryType',
   fields: {
@@ -136,6 +138,46 @@ const mutation = new GraphQLObjectType({
         });
 
         return project.save();
+      },
+    },
+    // Delete a project
+    deleteProject: {
+      type: ProjectType,
+      args: {
+        id: { type: GraphQLNonNull(GraphQLID) },
+      },
+      resolve(parent, args) {
+        return Project.findByIdAndRemove(args.id);
+      },
+    },
+    // Update a project
+    updateProject: {
+      type: ProjectType,
+      args: {
+        id: { type: GraphQLNonNull(GraphQLID) },
+        name: { type: GraphQLString },
+        description: { type: GraphQLString },
+        status: {
+          type: new GraphQLEnumType({
+            name: 'ProjectStatusUpdate',
+            values: {
+              new: { value: 'Pending' },
+              progress: { value: 'Progress' },
+              completed: { value: 'Completed' },
+            },
+          }),
+        },
+      },
+      resolve(parent, args) {
+        args.id,
+          {
+            $set: {
+              name: args.name,
+              description: args.description,
+              status: args.status,
+            },
+          },
+          { new: true };
       },
     },
   },
